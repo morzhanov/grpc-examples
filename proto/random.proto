@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package random;
+
+// The greeting service definition.
+service Random {
+  // Returns random number
+  rpc GenerateRandomNumber (RandomNumberRequest) returns (RandomNumberReply) {}
+}
+
+// The request message containing the max number length
+message RandomNumberRequest {
+  string maxLength = 1;
+}
+
+// The response message containing the number
+message RandomNumberReply {
+  string number = 1;
+}
