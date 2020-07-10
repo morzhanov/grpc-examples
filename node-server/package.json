@@ -1,61 +1,30 @@
 {
-  "name": "node-server",
+  "name": "node-grpc-server",
   "version": "1.0.0",
-  "description": "gRPC nodejs server",
-  "keywords": [
-    "loopback-application",
-    "loopback"
-  ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "engines": {
-    "node": ">=10.16"
-  },
+  "description": "node-grpc-server",
+  "main": "server.js",
   "scripts": {
-    "build": "lb-tsc",
-    "build:watch": "lb-tsc --watch",
-    "lint": "npm run prettier:check && npm run eslint",
-    "lint:fix": "npm run eslint:fix && npm run prettier:fix",
-    "prettier:cli": "lb-prettier \"**/*.ts\" \"**/*.js\"",
-    "prettier:check": "npm run prettier:cli -- -l",
-    "prettier:fix": "npm run prettier:cli -- --write",
-    "eslint": "lb-eslint --report-unused-disable-directives .",
-    "eslint:fix": "npm run eslint -- --fix",
-    "pretest": "npm run clean && npm run build",
-    "posttest": "npm run lint",
-    "migrate": "node ./dist/migrate",
-    "openapi-spec": "node ./dist/openapi-spec",
-    "prestart": "npm run build",
-    "start": "node -r source-map-support/register .",
-    "clean": "lb-clean dist *.tsbuildinfo .eslintcache"
+    "start": "ts-node server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
-    "type": "git"
+    "type": "git",
+    "url": "git+https://github.com/morzhanov/grpc-examples.git"
   },
-  "author": "",
-  "license": "",
-  "files": [
-    "README.md",
-    "dist",
-    "src",
-    "!*/__tests__"
-  ],
+  "author": "morzhanov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/morzhanov/grpc-examples/issues"
+  },
+  "homepage": "https://github.com/morzhanov/grpc-examples#readme",
   "dependencies": {
-    "@loopback/boot": "^2.3.5",
-    "@loopback/core": "^2.9.1",
-    "@loopback/openapi-v3": "^3.4.5",
-    "@loopback/rest": "^5.2.0",
-    "@loopback/rest-explorer": "^2.2.6",
-    "@loopback/service-proxy": "^2.3.4",
-    "tslib": "^2.0.0"
+    "@grpc/proto-loader": "^0.5.4",
+    "grpc": "^1.24.3",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.6"
   },
   "devDependencies": {
-    "@loopback/build": "^6.1.0",
-    "source-map-support": "^0.5.19",
-    "@loopback/testlab": "^3.2.0",
-    "@types/node": "^10.17.26",
-    "@loopback/eslint-config": "^8.0.3",
-    "eslint": "^7.3.1",
-    "typescript": "~3.9.5"
+    "@types/node": "^14.0.20",
+    "tslint": "^6.1.2"
   }
 }

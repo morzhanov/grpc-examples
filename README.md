@@ -11,6 +11,13 @@ Goland and Nodejs gRPC examples
 
 Both nodejs and golang client communicate with golang and nodejs servers.
 
+## Run
+
+- Golang server: `go run server.go`
+- Golang client: `go run client <max-rand-number> <port>`
+- NodeJS server: `npm run start`
+- NodeJS client: `npm run start <max-rand-number> <port>`
+
 ## generate golang proto files
 
 1. go to proto folder
@@ -24,3 +31,5 @@ protoc \
     --go-grpc_opt=paths=source_relative \
     random.proto
 ```
+
+### NOTE: nodejs proto declarations generated dynamically via `@grpc/proto-loader` package
