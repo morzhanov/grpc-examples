@@ -9,14 +9,35 @@ service Random {
 
   // Returns random numbers
   rpc StreamNumbers(RandomNumberRequest) returns (stream RandomNumberReply) {}
+
+  // Logs random numbers from client
+  rpc LogStreamOfRandomNumbers(stream LogRandomNumberRequest) returns (LogRandomNumberReply) {}
+
+  // Communication of random numbers from server and client
+  rpc BidirectionalStream(stream BidirectionalMessage) returns (stream BidirectionalMessage) {}
 }
 
 // The request message containing the max number length
 message RandomNumberRequest {
-  string maxLength = 1;
+  int32 maxLength = 1;
+}
+
+// The request message containing random number
+message LogRandomNumberRequest {
+  int32 number = 1;
+}
+
+// The response message containing stream execution results
+message LogRandomNumberReply {
+  string message = 1;
 }
 
 // The response message containing the number
 message RandomNumberReply {
-  string number = 1;
+  int32 number = 1;
+}
+
+// The bidirectional message with random numbers
+message BidirectionalMessage {
+  int32 number = 1;
 }

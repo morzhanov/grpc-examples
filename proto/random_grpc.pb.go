@@ -21,6 +21,10 @@ type RandomClient interface {
 	GenerateRandomNumber(ctx context.Context, in *RandomNumberRequest, opts ...grpc.CallOption) (*RandomNumberReply, error)
 	// Returns random numbers
 	StreamNumbers(ctx context.Context, in *RandomNumberRequest, opts ...grpc.CallOption) (Random_StreamNumbersClient, error)
+	// Logs random numbers from client
+	LogStreamOfRandomNumbers(ctx context.Context, opts ...grpc.CallOption) (Random_LogStreamOfRandomNumbersClient, error)
+	// Communication of random numbers from server and client
+	BidirectionalStream(ctx context.Context, opts ...grpc.CallOption) (Random_BidirectionalStreamClient, error)
 }
 
 type randomClient struct {
@@ -72,6 +76,71 @@ func (x *randomStreamNumbersClient) Recv() (*RandomNumberReply, error) {
 	return m, nil
 }
 
+func (c *randomClient) LogStreamOfRandomNumbers(ctx context.Context, opts ...grpc.CallOption) (Random_LogStreamOfRandomNumbersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Random_serviceDesc.Streams[1], "/random.Random/LogStreamOfRandomNumbers", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &randomLogStreamOfRandomNumbersClient{stream}
+	return x, nil
+}
+
+type Random_LogStreamOfRandomNumbersClient interface {
+	Send(*LogRandomNumberRequest) error
+	CloseAndRecv() (*LogRandomNumberReply, error)
+	grpc.ClientStream
+}
+
+type randomLogStreamOfRandomNumbersClient struct {
+	grpc.ClientStream
+}
+
+func (x *randomLogStreamOfRandomNumbersClient) Send(m *LogRandomNumberRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *randomLogStreamOfRandomNumbersClient) CloseAndRecv() (*LogRandomNumberReply, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(LogRandomNumberReply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *randomClient) BidirectionalStream(ctx context.Context, opts ...grpc.CallOption) (Random_BidirectionalStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Random_serviceDesc.Streams[2], "/random.Random/BidirectionalStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &randomBidirectionalStreamClient{stream}
+	return x, nil
+}
+
+type Random_BidirectionalStreamClient interface {
+	Send(*BidirectionalMessage) error
+	Recv() (*BidirectionalMessage, error)
+	grpc.ClientStream
+}
+
+type randomBidirectionalStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *randomBidirectionalStreamClient) Send(m *BidirectionalMessage) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *randomBidirectionalStreamClient) Recv() (*BidirectionalMessage, error) {
+	m := new(BidirectionalMessage)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // RandomServer is the server API for Random service.
 // All implementations must embed UnimplementedRandomServer
 // for forward compatibility
@@ -80,6 +149,10 @@ type RandomServer interface {
 	GenerateRandomNumber(context.Context, *RandomNumberRequest) (*RandomNumberReply, error)
 	// Returns random numbers
 	StreamNumbers(*RandomNumberRequest, Random_StreamNumbersServer) error
+	// Logs random numbers from client
+	LogStreamOfRandomNumbers(Random_LogStreamOfRandomNumbersServer) error
+	// Communication of random numbers from server and client
+	BidirectionalStream(Random_BidirectionalStreamServer) error
 	mustEmbedUnimplementedRandomServer()
 }
 
@@ -92,6 +165,12 @@ func (*UnimplementedRandomServer) GenerateRandomNumber(context.Context, *RandomN
 }
 func (*UnimplementedRandomServer) StreamNumbers(*RandomNumberRequest, Random_StreamNumbersServer) error {
 	return status.Errorf(codes.Unimplemented, "method StreamNumbers not implemented")
+}
+func (*UnimplementedRandomServer) LogStreamOfRandomNumbers(Random_LogStreamOfRandomNumbersServer) error {
+	return status.Errorf(codes.Unimplemented, "method LogStreamOfRandomNumbers not implemented")
+}
+func (*UnimplementedRandomServer) BidirectionalStream(Random_BidirectionalStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BidirectionalStream not implemented")
 }
 func (*UnimplementedRandomServer) mustEmbedUnimplementedRandomServer() {}
 
@@ -138,6 +217,58 @@ func (x *randomStreamNumbersServer) Send(m *RandomNumberReply) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Random_LogStreamOfRandomNumbers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RandomServer).LogStreamOfRandomNumbers(&randomLogStreamOfRandomNumbersServer{stream})
+}
+
+type Random_LogStreamOfRandomNumbersServer interface {
+	SendAndClose(*LogRandomNumberReply) error
+	Recv() (*LogRandomNumberRequest, error)
+	grpc.ServerStream
+}
+
+type randomLogStreamOfRandomNumbersServer struct {
+	grpc.ServerStream
+}
+
+func (x *randomLogStreamOfRandomNumbersServer) SendAndClose(m *LogRandomNumberReply) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *randomLogStreamOfRandomNumbersServer) Recv() (*LogRandomNumberRequest, error) {
+	m := new(LogRandomNumberRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Random_BidirectionalStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RandomServer).BidirectionalStream(&randomBidirectionalStreamServer{stream})
+}
+
+type Random_BidirectionalStreamServer interface {
+	Send(*BidirectionalMessage) error
+	Recv() (*BidirectionalMessage, error)
+	grpc.ServerStream
+}
+
+type randomBidirectionalStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *randomBidirectionalStreamServer) Send(m *BidirectionalMessage) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *randomBidirectionalStreamServer) Recv() (*BidirectionalMessage, error) {
+	m := new(BidirectionalMessage)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 var _Random_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "random.Random",
 	HandlerType: (*RandomServer)(nil),
@@ -152,6 +283,17 @@ var _Random_serviceDesc = grpc.ServiceDesc{
 			StreamName:    "StreamNumbers",
 			Handler:       _Random_StreamNumbers_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "LogStreamOfRandomNumbers",
+			Handler:       _Random_LogStreamOfRandomNumbers_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BidirectionalStream",
+			Handler:       _Random_BidirectionalStream_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "random.proto",
