@@ -1,6 +1,6 @@
 # gRPC Examples
 
-Goland and Nodejs gRPC examples
+Golang and Nodejs gRPC examples
 
 ## Components
 
