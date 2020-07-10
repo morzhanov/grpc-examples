@@ -19,6 +19,8 @@ const _ = grpc.SupportPackageIsVersion6
 type RandomClient interface {
 	// Returns random number
 	GenerateRandomNumber(ctx context.Context, in *RandomNumberRequest, opts ...grpc.CallOption) (*RandomNumberReply, error)
+	// Returns random numbers
+	StreamNumbers(ctx context.Context, in *RandomNumberRequest, opts ...grpc.CallOption) (Random_StreamNumbersClient, error)
 }
 
 type randomClient struct {
@@ -38,12 +40,46 @@ func (c *randomClient) GenerateRandomNumber(ctx context.Context, in *RandomNumbe
 	return out, nil
 }
 
+func (c *randomClient) StreamNumbers(ctx context.Context, in *RandomNumberRequest, opts ...grpc.CallOption) (Random_StreamNumbersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Random_serviceDesc.Streams[0], "/random.Random/StreamNumbers", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &randomStreamNumbersClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Random_StreamNumbersClient interface {
+	Recv() (*RandomNumberReply, error)
+	grpc.ClientStream
+}
+
+type randomStreamNumbersClient struct {
+	grpc.ClientStream
+}
+
+func (x *randomStreamNumbersClient) Recv() (*RandomNumberReply, error) {
+	m := new(RandomNumberReply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // RandomServer is the server API for Random service.
 // All implementations must embed UnimplementedRandomServer
 // for forward compatibility
 type RandomServer interface {
 	// Returns random number
 	GenerateRandomNumber(context.Context, *RandomNumberRequest) (*RandomNumberReply, error)
+	// Returns random numbers
+	StreamNumbers(*RandomNumberRequest, Random_StreamNumbersServer) error
 	mustEmbedUnimplementedRandomServer()
 }
 
@@ -53,6 +89,9 @@ type UnimplementedRandomServer struct {
 
 func (*UnimplementedRandomServer) GenerateRandomNumber(context.Context, *RandomNumberRequest) (*RandomNumberReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateRandomNumber not implemented")
+}
+func (*UnimplementedRandomServer) StreamNumbers(*RandomNumberRequest, Random_StreamNumbersServer) error {
+	return status.Errorf(codes.Unimplemented, "method StreamNumbers not implemented")
 }
 func (*UnimplementedRandomServer) mustEmbedUnimplementedRandomServer() {}
 
@@ -78,6 +117,27 @@ func _Random_GenerateRandomNumber_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Random_StreamNumbers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RandomNumberRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(RandomServer).StreamNumbers(m, &randomStreamNumbersServer{stream})
+}
+
+type Random_StreamNumbersServer interface {
+	Send(*RandomNumberReply) error
+	grpc.ServerStream
+}
+
+type randomStreamNumbersServer struct {
+	grpc.ServerStream
+}
+
+func (x *randomStreamNumbersServer) Send(m *RandomNumberReply) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _Random_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "random.Random",
 	HandlerType: (*RandomServer)(nil),
@@ -87,6 +147,12 @@ var _Random_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Random_GenerateRandomNumber_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamNumbers",
+			Handler:       _Random_StreamNumbers_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "random.proto",
 }

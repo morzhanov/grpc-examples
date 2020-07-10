@@ -6,6 +6,9 @@ package random;
 service Random {
   // Returns random number
   rpc GenerateRandomNumber (RandomNumberRequest) returns (RandomNumberReply) {}
+
+  // Returns random numbers
+  rpc StreamNumbers(RandomNumberRequest) returns (stream RandomNumberReply) {}
 }
 
 // The request message containing the max number length
